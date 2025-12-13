@@ -13,7 +13,7 @@ class AiAdvisorService
     protected AdvisorContextBuilder $contextBuilder;
     protected AdvisorGuards $guards;
     protected string $apiKey;
-    protected string $model = 'llama-3.3-70b-versatile';
+    protected string $model = 'groq/compound';
 
     protected const MAX_RETRIES = 1;
 
