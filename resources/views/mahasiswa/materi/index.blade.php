@@ -98,8 +98,8 @@
 
     <!-- Back Link -->
     <div class="mt-6">
-        <a href="{{ route('mahasiswa.jadwal.index') }}" class="text-sm text-siakad-secondary hover:text-siakad-primary transition">
-            ← Kembali ke Jadwal
+        <a href="{{ route('mahasiswa.lms.index') }}" class="text-sm text-siakad-secondary hover:text-siakad-primary transition">
+            ← Kembali ke Materi & Tugas
         </a>
     </div>
 </x-app-layout>
