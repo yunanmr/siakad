@@ -5,9 +5,9 @@
 
     <!-- Back Link -->
     <div class="mb-4">
-        <a href="{{ route('mahasiswa.tugas.index', $kelas->id) }}" class="text-sm text-siakad-secondary hover:text-siakad-primary transition flex items-center gap-1">
+        <a href="{{ route('mahasiswa.lms.index') }}" class="text-sm text-siakad-secondary hover:text-siakad-primary transition flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            Kembali ke Daftar Tugas
+            Kembali ke Materi & Tugas
         </a>
     </div>
 
