@@ -3,14 +3,29 @@
         Tugas - {{ $kelas->mataKuliah->nama_mk }}
     </x-slot>
 
+    @if($isArchived)
+    <!-- Archive Notice -->
+    <div class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+        <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+            <span>Ini adalah kelas dari semester sebelumnya ({{ $kelas->tahunAkademik->display_name ?? 'Arsip' }}). Pengumpulan tugas tidak tersedia.</span>
+        </div>
+    </div>
+    @endif
+
     <!-- Class Info -->
     <div class="card-saas p-4 mb-6 dark:bg-gray-800">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-gradient-to-br from-siakad-primary to-siakad-dark rounded-xl flex items-center justify-center text-white font-bold text-lg">
                 {{ $kelas->nama_kelas }}
             </div>
-            <div>
-                <h2 class="text-lg font-bold text-siakad-dark dark:text-white">{{ $kelas->mataKuliah->nama_mk }}</h2>
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-lg font-bold text-siakad-dark dark:text-white">{{ $kelas->mataKuliah->nama_mk }}</h2>
+                    @if($isArchived)
+                    <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full">Arsip</span>
+                    @endif
+                </div>
                 <p class="text-sm text-siakad-secondary dark:text-gray-400">{{ $kelas->mataKuliah->kode_mk }} • Dosen: {{ $kelas->dosen->user->name ?? '-' }}</p>
             </div>
         </div>
@@ -52,6 +67,8 @@
                             @else
                             <span class="px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg">Menunggu Penilaian</span>
                             @endif
+                        @elseif($isArchived)
+                        <span class="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg">Arsip Semester</span>
                         @elseif($tugas->isOpen())
                         <a href="{{ route('mahasiswa.tugas.show', [$kelas->id, $tugas->id]) }}" class="px-4 py-2 text-sm font-medium bg-siakad-primary text-white rounded-lg hover:bg-siakad-primary/90 transition">
                             Kumpulkan Tugas
