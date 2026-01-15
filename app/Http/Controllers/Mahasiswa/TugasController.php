@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
+use App\Models\TahunAkademik;
 use App\Models\Tugas;
 use App\Models\TugasSubmission;
 use Illuminate\Http\Request;
@@ -14,12 +15,13 @@ class TugasController extends Controller
 {
     /**
      * List all tugas for a kelas
+     * Supports historical access for archived semesters
      */
     public function index($kelasId)
     {
         $mahasiswa = Auth::user()->mahasiswa;
         
-        // Verify enrollment
+        // Verify enrollment (from any semester)
         $isEnrolled = $mahasiswa->krs()
             ->where('status', 'approved')
             ->whereHas('krsDetail', fn($q) => $q->where('kelas_id', $kelasId))
@@ -29,26 +31,35 @@ class TugasController extends Controller
             abort(403, 'Anda tidak terdaftar di kelas ini.');
         }
 
-        $kelas = Kelas::with(['mataKuliah', 'dosen.user'])->findOrFail($kelasId);
+        $kelas = Kelas::with(['mataKuliah', 'dosen.user', 'tahunAkademik'])->findOrFail($kelasId);
         
-        // Get tugas with submission status
-        $tugasList = Tugas::where('kelas_id', $kelasId)
-            ->where('is_active', true)
-            ->with(['submissions' => fn($q) => $q->where('mahasiswa_id', $mahasiswa->id)])
-            ->latest()
-            ->get();
+        // Check if this is an archived class
+        $tahunAktif = TahunAkademik::active();
+        $isArchived = $tahunAktif === null || $kelas->tahun_akademik_id !== $tahunAktif->id;
+        
+        // Get tugas with submission status (show all tugas for archived, only active for current)
+        $tugasQuery = Tugas::where('kelas_id', $kelasId)
+            ->with(['submissions' => fn($q) => $q->where('mahasiswa_id', $mahasiswa->id)]);
+        
+        // For active semester, only show active tugas. For archived, show all.
+        if (!$isArchived) {
+            $tugasQuery->where('is_active', true);
+        }
+        
+        $tugasList = $tugasQuery->latest()->get();
 
-        return view('mahasiswa.tugas.index', compact('kelas', 'tugasList', 'mahasiswa'));
+        return view('mahasiswa.tugas.index', compact('kelas', 'tugasList', 'mahasiswa', 'isArchived'));
     }
 
     /**
      * Show tugas detail
+     * Supports historical access for archived semesters
      */
     public function show($kelasId, Tugas $tugas)
     {
         $mahasiswa = Auth::user()->mahasiswa;
         
-        // Verify enrollment
+        // Verify enrollment (from any semester)
         $isEnrolled = $mahasiswa->krs()
             ->where('status', 'approved')
             ->whereHas('krsDetail', fn($q) => $q->where('kelas_id', $kelasId))
@@ -58,10 +69,15 @@ class TugasController extends Controller
             abort(403);
         }
 
-        $kelas = Kelas::with(['mataKuliah', 'dosen.user'])->findOrFail($kelasId);
+        $kelas = Kelas::with(['mataKuliah', 'dosen.user', 'tahunAkademik'])->findOrFail($kelasId);
+        
+        // Check if this is an archived class
+        $tahunAktif = TahunAkademik::active();
+        $isArchived = $tahunAktif === null || $kelas->tahun_akademik_id !== $tahunAktif->id;
+        
         $submission = $tugas->submissions()->where('mahasiswa_id', $mahasiswa->id)->first();
 
-        return view('mahasiswa.tugas.show', compact('kelas', 'tugas', 'submission'));
+        return view('mahasiswa.tugas.show', compact('kelas', 'tugas', 'submission', 'isArchived'));
     }
 
     /**

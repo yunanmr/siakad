@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\Materi;
 use App\Models\Pertemuan;
+use App\Models\TahunAkademik;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,7 @@ class MateriController extends Controller
 {
     /**
      * Show materi for a specific kelas (mahasiswa view)
+     * Supports historical access for archived semesters
      */
     public function index($kelasId)
     {
@@ -22,7 +24,7 @@ class MateriController extends Controller
             abort(403, 'Anda tidak memiliki akses sebagai mahasiswa.');
         }
         
-        // Verify mahasiswa is enrolled in this kelas
+        // Verify mahasiswa is enrolled in this kelas (from any semester)
         $isEnrolled = $mahasiswa->krs()
             ->where('status', 'approved')
             ->whereHas('krsDetail', fn($q) => $q->where('kelas_id', $kelasId))
@@ -32,7 +34,11 @@ class MateriController extends Controller
             abort(403, 'Anda tidak terdaftar di kelas ini.');
         }
 
-        $kelas = Kelas::with('mataKuliah', 'dosen.user')->findOrFail($kelasId);
+        $kelas = Kelas::with('mataKuliah', 'dosen.user', 'tahunAkademik')->findOrFail($kelasId);
+
+        // Check if this is an archived class
+        $tahunAktif = TahunAkademik::active();
+        $isArchived = $tahunAktif === null || $kelas->tahun_akademik_id !== $tahunAktif->id;
 
         // Get all pertemuan for this kelas
         $pertemuanList = Pertemuan::whereHas('jadwalKuliah', fn($q) => $q->where('kelas_id', $kelasId))
@@ -40,7 +46,7 @@ class MateriController extends Controller
             ->orderBy('pertemuan_ke')
             ->get();
 
-        return view('mahasiswa.materi.index', compact('kelas', 'pertemuanList'));
+        return view('mahasiswa.materi.index', compact('kelas', 'pertemuanList', 'isArchived'));
     }
 
     /**
